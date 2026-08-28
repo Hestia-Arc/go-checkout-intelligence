@@ -45,7 +45,7 @@ business capabilities.
 - [x] Configuration works
 - [x] HTTP server starts
 - [x] Health endpoint responds
-- [ ] Basic middleware works
+- [x] Basic middleware works
 - [ ] PostgreSQL connection works
 - [ ] Database migrations work
 - [ ] Backend tests pass

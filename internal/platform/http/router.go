@@ -3,6 +3,8 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+
+	"esty.checkout-intelligence/internal/platform/middleware"
 )
 
 func NewRouter() http.Handler {
@@ -10,7 +12,16 @@ func NewRouter() http.Handler {
 
 	mux.HandleFunc("GET /health", healthHandler)
 
-	return mux
+	mux.HandleFunc("GET /panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("test panic")
+	})
+
+	var handler http.Handler = mux
+
+	handler = middleware.Recovery(handler)
+	handler = middleware.RequestID(handler)
+
+	return handler
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
