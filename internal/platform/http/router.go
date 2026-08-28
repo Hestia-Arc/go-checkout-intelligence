@@ -2,12 +2,13 @@ package httpserver
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"esty.checkout-intelligence/internal/platform/middleware"
 )
 
-func NewRouter() http.Handler {
+func NewRouter(logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", healthHandler)
@@ -18,7 +19,8 @@ func NewRouter() http.Handler {
 
 	var handler http.Handler = mux
 
-	handler = middleware.Recovery(handler)
+	handler = middleware.RequestLogger(logger)(handler)
+	handler = middleware.Recovery(logger)(handler)
 	handler = middleware.RequestID(handler)
 
 	return handler

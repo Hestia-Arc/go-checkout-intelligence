@@ -10,6 +10,7 @@ import (
 
 	"esty.checkout-intelligence/internal/platform/config"
 	httpserver "esty.checkout-intelligence/internal/platform/http"
+	"esty.checkout-intelligence/internal/platform/logger"
 )
 
 func main() {
@@ -22,7 +23,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	router := httpserver.NewRouter()
+	logger := logger.New()
+
+	router := httpserver.NewRouter(logger)
 
 	server := httpserver.NewServer(cfg.HTTPAddr, router)
 

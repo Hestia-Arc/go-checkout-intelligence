@@ -1,13 +1,17 @@
 package middleware
 
 import (
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestRecovery(t *testing.T) {
-	handler := Recovery(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
+	handler := Recovery(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic("test panic")
 	}))
 
