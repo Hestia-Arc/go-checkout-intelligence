@@ -8,13 +8,23 @@ import (
 	"os/signal"
 	"syscall"
 
+	"esty.checkout-intelligence/internal/platform/config"
 	httpserver "esty.checkout-intelligence/internal/platform/http"
 )
 
 func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal()
+	}
+
+	if err := cfg.Validate(); err != nil {
+		log.Fatal(err)
+	}
+
 	router := httpserver.NewRouter()
 
-	server := httpserver.NewServer(":8080", router)
+	server := httpserver.NewServer(cfg.HTTPAddr, router)
 
 	serverErrors := make(chan error, 1)
 
