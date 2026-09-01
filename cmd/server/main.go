@@ -7,8 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"esty.checkout-intelligence/internal/platform/config"
+	"esty.checkout-intelligence/internal/platform/database"
 	httpserver "esty.checkout-intelligence/internal/platform/http"
 	"esty.checkout-intelligence/internal/platform/logger"
 )
@@ -16,16 +18,29 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal()
+		log.Fatalf("failed to load configuration: %v", err)
 	}
 
 	if err := cfg.Validate(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to validate configuration: %v", err)
 	}
 
-	logger := logger.New()
+	db, err := database.Open(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to open database: %v", err)
+	}
+	defer database.Close(db)
 
-	router := httpserver.NewRouter(logger)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := database.Ping(ctx, db); err != nil {
+		log.Fatalf("failed to ping database: %v", err)
+	}
+
+	applogger := logger.New()
+
+	router := httpserver.NewRouter(applogger)
 
 	server := httpserver.NewServer(cfg.HTTPAddr, router)
 
