@@ -1,0 +1,6 @@
+{
+  "name": "Checkout Intelligence",
+  "description": "B2B checkout observability and intelligence platform that connects to your existing store, captures checkout activity, detects drop-offs and payment failures, and surfaces actionable business insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
