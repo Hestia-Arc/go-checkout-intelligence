@@ -38,7 +38,7 @@ export const ProductFlow: React.FC = () => {
     {
       num: '04',
       title: 'Analyze checkout behavior',
-      desc: 'Statistical baseline algorithms evaluate drop-off friction across dimensions: device type, browser engine, payment method, and geo region.',
+      desc: 'Analyze checkout behavior against historical baselines across dimensions: device type, browser engine, payment method, and geo region.',
       icon: BarChart3,
       detail: 'Automated deviation triggers surface rate spikes without needing manual SQL queries.',
     },

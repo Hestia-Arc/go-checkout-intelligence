@@ -88,7 +88,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenConnect, onOpenHowItWorks }) =
                     <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
                     <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
                   </div>
-                  <span className="text-xs font-mono text-slate-400 ml-2">store_production_us</span>
+                  <span className="text-xs font-mono text-slate-400 ml-2">demo_store</span>
                 </div>
 
                 {/* Segment toggle */}

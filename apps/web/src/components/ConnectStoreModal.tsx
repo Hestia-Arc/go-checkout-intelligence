@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, Copy, CheckCircle2, ArrowRight, Store, Terminal, ShieldCheck } from 'lucide-react';
+import { X, CheckCircle2, ArrowRight, Terminal} from 'lucide-react';
 
 interface ConnectStoreModalProps {
   isOpen: boolean;
@@ -8,39 +8,31 @@ interface ConnectStoreModalProps {
 
 export const ConnectStoreModal: React.FC<ConnectStoreModalProps> = ({ isOpen, onClose }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedPlatform, setSelectedPlatform] = useState('headless');
+  const [selectedPlatform, setSelectedPlatform] = useState('custom');
   const [storeName, setStoreName] = useState('My Online Store');
   const [storeUrl, setStoreUrl] = useState('https://store.example.com');
   const [pingStatus, setPingStatus] = useState<'idle' | 'sending' | 'success'>('idle');
-  const [copiedKey, setCopiedKey] = useState(false);
 
   if (!isOpen) return null;
-
-  const mockApiKey = 'chk_pub_live_79a24fe10b981d3';
-
-  const handleCopyKey = () => {
-    navigator.clipboard.writeText(mockApiKey);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
-  };
 
   const handleSendPing = () => {
     setPingStatus('sending');
     setTimeout(() => {
       setPingStatus('success');
-    }, 1200);
+    }, 800);
   };
 
   const platforms = [
-    { id: 'headless', name: 'Custom Headless / Next.js', tag: 'SDK / API' },
-    { id: 'shopify', name: 'Shopify Checkout', tag: 'Web Pixels' },
-    { id: 'woocommerce', name: 'WooCommerce', tag: 'Webhook' },
-    { id: 'magento', name: 'Magento / Adobe Commerce', tag: 'Webhook' },
+    {
+      id: 'custom',
+      name: 'Custom / Headless Store',
+      tag: 'HTTP Event API',
+    },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div 
+      <div
         className="w-full max-w-xl rounded-2xl border border-slate-800 bg-[#0C121D] shadow-2xl overflow-hidden"
         role="dialog"
         aria-modal="true"
@@ -94,11 +86,10 @@ export const ConnectStoreModal: React.FC<ConnectStoreModalProps> = ({ isOpen, on
                       key={p.id}
                       type="button"
                       onClick={() => setSelectedPlatform(p.id)}
-                      className={`p-3 rounded-lg border text-left transition-all ${
-                        selectedPlatform === p.id
-                          ? 'border-indigo-500 bg-indigo-950/40 text-white'
-                          : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 text-slate-300'
-                      }`}
+                      className={`p-3 rounded-lg border text-left transition-all ${selectedPlatform === p.id
+                        ? 'border-indigo-500 bg-indigo-950/40 text-white'
+                        : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 text-slate-300'
+                        }`}
                     >
                       <div className="text-xs font-semibold">{p.name}</div>
                       <div className="text-[11px] font-mono text-slate-400 mt-0.5">{p.tag}</div>
@@ -139,39 +130,42 @@ export const ConnectStoreModal: React.FC<ConnectStoreModalProps> = ({ isOpen, on
             <div className="space-y-4">
               <div>
                 <span className="text-xs font-medium text-slate-300 block mb-1">
-                  Your Public Store Key
+                  Integration setup
                 </span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={mockApiKey}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs font-mono text-indigo-300 select-all"
-                  />
-                  <button
-                    onClick={handleCopyKey}
-                    className="p-2 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300"
-                    title="Copy Key"
-                  >
-                    {copiedKey ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Safe to include in client checkout scripts or backend webhook headers.
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Checkout Intelligence receives checkout events from your store through
+                  an HTTP event API. The production credential and endpoint will be
+                  generated when store integration is implemented.
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3.5 space-y-2">
-                <span className="text-xs font-mono text-slate-300 font-semibold block">
-                  Installation Snippet
-                </span>
-                <pre className="text-[11px] font-mono text-indigo-300 overflow-x-auto p-2 rounded bg-black/60">
-{`<script 
-  src="https://cdn.checkoutintel.com/v1/ci.js" 
-  data-store-key="${mockApiKey}"
-  async>
-</script>`}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-300 font-semibold">
+                    Example Event
+                  </span>
+
+                  <span className="text-[10px] font-mono text-slate-500 uppercase">
+                    Contract Preview
+                  </span>
+                </div>
+
+                <pre className="text-[11px] font-mono text-indigo-300 overflow-x-auto p-3 rounded bg-black/60">
+                  {`{
+  "event": "checkout_started",
+  "checkout_id": "example_checkout_id",
+  "timestamp": "2026-10-07T10:00:00Z",
+  "device": "mobile"
+}`}
                 </pre>
+              </div>
+
+              <div className="rounded-lg border border-indigo-900/50 bg-indigo-950/20 p-3">
+                <p className="text-[11px] text-indigo-300 leading-relaxed">
+                  This is an illustrative event contract. The actual ingestion endpoint
+                  will be implemented as part of the Checkout Intelligence backend.
+                </p>
               </div>
             </div>
           )}
@@ -184,16 +178,18 @@ export const ConnectStoreModal: React.FC<ConnectStoreModalProps> = ({ isOpen, on
                     <Terminal className="w-6 h-6" />
                   </div>
                   <h4 className="text-sm font-bold text-white">
-                    Send a test ping event
+                    Simulate an event
                   </h4>
+
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                    Verify that your store's network can dispatch test checkout events to the ingestion endpoint.
+                    Preview how Checkout Intelligence will verify event delivery from your store.
                   </p>
+
                   <button
                     onClick={handleSendPing}
                     className="px-5 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm"
                   >
-                    Send Test Event Ping
+                    Simulate Test Event
                   </button>
                 </>
               )}
@@ -213,10 +209,13 @@ export const ConnectStoreModal: React.FC<ConnectStoreModalProps> = ({ isOpen, on
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <h4 className="text-sm font-bold text-white">
-                    Connection Verified!
+                    Event Simulation Complete
                   </h4>
+
                   <p className="text-xs text-slate-300 max-w-sm mx-auto">
-                    Checkout Intelligence received a test event from <span className="font-mono text-indigo-300">{storeName}</span>. Your telemetry pipeline is active.
+                    This demo simulates the event verification flow for{' '}
+                    <span className="font-mono text-indigo-300">{storeName}</span>.
+                    The live ingestion pipeline will be connected as the backend is implemented.
                   </p>
                 </div>
               )}

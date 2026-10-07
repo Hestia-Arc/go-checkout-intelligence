@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Terminal, Code2, Layers } from 'lucide-react';
+import { X, Copy, Check } from 'lucide-react';
 
 interface IntegrationsModalProps {
   isOpen: boolean;
@@ -12,64 +12,44 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   onClose,
   onConnectClick,
 }) => {
-  const [activeTab, setActiveTab] = useState<'node' | 'client' | 'rest'>('client');
+  const [activeTab, setActiveTab] = useState<'browser' | 'server' | 'http'>('browser');
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
   const snippets = {
-    client: `// Drop into your frontend checkout page (Next.js, Remix, or SPA)
-import { initCheckoutIntel } from '@checkout-intelligence/web';
+    browser: `// Example browser-side integration
+// The production client library will be added later.
 
-const ci = initCheckoutIntel({
-  storeKey: 'chk_pub_live_79a24fe10b981d3',
-});
+checkoutIntelligence.track('checkout_started', {
+  checkout_id: currentCheckout.id,
+  device: 'mobile',
+});`,
 
-// Emitted on payment gateway submission failure
-paymentForm.addEventListener('error', (err) => {
-  ci.track('payment_failed', {
-    checkout_id: currentCheckout.id,
-    step: 'payment',
+    server: `// Example server-side integration
+// The production SDK will be added later.
+
+await checkoutIntelligence.events.record({
+  event: 'payment_failed',
+  checkout_id: checkoutId,
+  timestamp: new Date().toISOString(),
+  payment: {
     method: 'credit_card',
-    decline_code: err.code, // e.g., '3ds_timeout'
-    device: 'mobile',
-  });
+  },
 });`,
-    node: `// Node.js Express / Webhook proxy
-import { CheckoutIntelligence } from '@checkout-intelligence/sdk';
 
-const ci = new CheckoutIntelligence({
-  apiKey: process.env.CHECKOUT_INTEL_SECRET_KEY,
-});
+    http: `# Example HTTP event ingestion
+# Endpoint and authentication will be defined
+# when the ingestion API is implemented.
 
-app.post('/api/webhooks/payment-failure', async (req, res) => {
-  const { checkoutId, declineReason, sessionMetadata } = req.body;
+POST /v1/events
 
-  await ci.events.record({
-    event: 'payment_failed',
-    checkout_id: checkoutId,
-    timestamp: new Date().toISOString(),
-    session: sessionMetadata,
-    payment: {
-      gateway: 'stripe',
-      decline_code: declineReason,
-    }
-  });
-
-  res.sendStatus(200);
-});`,
-    rest: `# Direct HTTPS Event Ingestion
-curl -X POST https://api.checkoutintel.com/v1/events \\
-  -H "Authorization: Bearer chk_pub_live_79a24fe10b981d3" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "event": "payment_failed",
-    "checkout_id": "chk_1024_x9b",
-    "timestamp": "2026-10-03T21:44:12Z",
-    "device": "mobile",
-    "step": "payment_processing",
-    "decline_code": "3ds_authentication_timeout"
-  }'`,
+{
+  "event": "payment_failed",
+  "checkout_id": "example_checkout_id",
+  "timestamp": "2026-10-07T10:00:00Z",
+  "device": "mobile"
+}`,
   };
 
   const handleCopy = () => {
@@ -80,7 +60,7 @@ curl -X POST https://api.checkoutintel.com/v1/events \\
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div 
+      <div
         className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-[#0C121D] shadow-2xl overflow-hidden"
         role="dialog"
         aria-modal="true"
@@ -92,7 +72,7 @@ curl -X POST https://api.checkoutintel.com/v1/events \\
               CI
             </span>
             <h3 id="integrations-title" className="text-sm font-bold text-white">
-              Integration Architecture & Code Samples
+              Integration Patterns & Event Contract
             </h3>
           </div>
           <button
@@ -108,34 +88,31 @@ curl -X POST https://api.checkoutintel.com/v1/events \\
         <div className="px-6 py-2.5 bg-[#0A0F19] border-b border-slate-800/80 flex items-center justify-between text-xs">
           <div className="flex items-center gap-1 font-mono">
             <button
-              onClick={() => setActiveTab('client')}
-              className={`px-3 py-1 rounded transition-colors ${
-                activeTab === 'client'
-                  ? 'bg-slate-800 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={() => setActiveTab('browser')}
+              className={`px-3 py-1 rounded transition-colors ${activeTab === 'browser'
+                ? 'bg-slate-800 text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-200'
+                }`}
             >
-              Client SDK
+              Browser
             </button>
             <button
-              onClick={() => setActiveTab('node')}
-              className={`px-3 py-1 rounded transition-colors ${
-                activeTab === 'node'
-                  ? 'bg-slate-800 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={() => setActiveTab('server')}
+              className={`px-3 py-1 rounded transition-colors ${activeTab === 'server'
+                ? 'bg-slate-800 text-white font-semibold`'
+                : 'text-slate-400 hover:text-slate-200'
+                }`}
             >
-              Node.js Backend
+              Server
             </button>
             <button
-              onClick={() => setActiveTab('rest')}
-              className={`px-3 py-1 rounded transition-colors ${
-                activeTab === 'rest'
-                  ? 'bg-slate-800 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={() => setActiveTab('http')}
+              className={`px-3 py-1 rounded transition-colors ${activeTab === 'http'
+                ? 'bg-slate-800 text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-200'
+                }`}
             >
-              REST Webhook
+              HTTP API
             </button>
           </div>
 
@@ -166,9 +143,11 @@ curl -X POST https://api.checkoutintel.com/v1/events \\
           </div>
 
           <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-            <span>
-              Compatible with headless checkouts, Shopify Web Pixels, custom microservices.
-            </span>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Checkout Intelligence is designed around an event-based integration
+              boundary, allowing existing commerce systems to send relevant checkout
+              events without replacing their checkout infrastructure.
+            </p>
             <button
               onClick={() => {
                 onClose();
