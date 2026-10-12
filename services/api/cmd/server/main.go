@@ -3,70 +3,92 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"esty.checkout-intelligence/internal/app"
 	"esty.checkout-intelligence/internal/platform/config"
-	"esty.checkout-intelligence/internal/platform/database"
-	httpserver "esty.checkout-intelligence/internal/platform/http"
-	"esty.checkout-intelligence/internal/platform/logger"
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Printf("application failed: %v", err)
+		os.Exit(1)
+	}
+}
+
+func run() (runErr error) {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load configuration: %v", err)
+		return fmt.Errorf("load configuration: %w", err)
 	}
 
 	if err := cfg.Validate(); err != nil {
-		log.Fatalf("failed to validate configuration: %v", err)
+		return fmt.Errorf("validate configuration: %w", err)
 	}
 
-	db, err := database.Open(cfg.DatabaseURL)
+	startupCtx, cancelStartup := context.WithTimeout(
+		context.Background(),
+		5*time.Second,
+	)
+
+	application, err := app.New(startupCtx, cfg)
+	cancelStartup()
+
 	if err != nil {
-		log.Fatalf("failed to open database: %v", err)
-	}
-	defer database.Close(db)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := database.Ping(ctx, db); err != nil {
-		log.Fatalf("failed to ping database: %v", err)
+		return fmt.Errorf("initialize application: %w", err)
 	}
 
-	applogger := logger.New()
+	defer func() {
+		if err := application.Close(); err != nil {
+			runErr = errors.Join(
+				runErr,
+				fmt.Errorf("close application resources: %w", err),
+			)
+		}
+	}()
 
-	router := httpserver.NewRouter(applogger)
-
-	server := httpserver.NewServer(cfg.HTTPAddr, router)
+	// Register signal handling before starting the server.
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(shutdown)
 
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		serverErrors <- server.Start()
+		serverErrors <- application.Start()
 	}()
-
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case err := <-serverErrors:
-		if !errors.Is(err, context.Canceled) {
-			log.Printf("server error: %v", err)
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
 		}
+
+		if err == nil {
+			return errors.New("HTTP server stopped unexpectedly")
+		}
+
+		return fmt.Errorf("HTTP server failed: %w", err)
 
 	case sig := <-shutdown:
 		log.Printf("shutdown signal received: %s", sig)
-
-		ctx, cancel := httpserver.DefaultShutdownContext()
-		defer cancel()
-
-		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("graceful shutdown failed: %v", err)
-		}
 	}
+
+	shutdownCtx, cancelShutdown := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+	defer cancelShutdown()
+
+	if err := application.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("graceful shutdown: %w", err)
+	}
+
+	return nil
 }
